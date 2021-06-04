@@ -1,0 +1,9 @@
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=10:00:00
+#PBS -N proverbs
+#PBS -j oe
+#PBS -M ethan.davis@uvm.edu
+#PBS -m bea
+cd $HOME
+echo "running on " `hostname`
+~/anaconda3/bin/python proverbs/proverb_nw.py

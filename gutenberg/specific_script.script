@@ -1,0 +1,9 @@
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=01:00:00
+#PBS -N proverbs
+#PBS -j oe
+#PBS -m bea
+
+cd $HOME
+echo "running on " `hostname`
+~/anaconda3/bin/python proverbs/get_specific2.py -ifile proverbs/jobtexts/job9.txt

@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+for F in $(cd nyt_jobs/ && ls)
+do
+ filename=$F
+ sed -i "9s@.*@~/anaconda3/bin/python nyt_tgz_proverbs.py -ifile nyt_jobs/${filename}@g" nyt_script.script
+ qsub nyt_script.script
+done
