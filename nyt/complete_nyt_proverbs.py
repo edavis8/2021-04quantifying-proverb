@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 17 11:37:52 2020
 
-@author: admin
+Ethan Davis
+
+Get proverbs from the nyt annotated corpus
+Reads xml files and finds proverbs in article text
+Get metadata from articles with proverbs
+
+Takes arguments: 
+    -i --inputfile     job*.txt file with nyt corpus files to submit to server
+
 """
 from xml.etree import ElementTree as et
 import re
@@ -16,7 +23,7 @@ import subprocess
 import tarfile
 
 def make_args():
-    description = 'get proverbs from gutenberg books'
+    description = 'get proverbs from nyt corpus'
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument('-ifile',
@@ -39,6 +46,11 @@ def get_filenames(infile):
     return files
 
 def gather_proverbs():
+    """
+    Retrieve proverbs from Mieder's Dictionary of American Proverbs (1992)
+    Return with and without punctuation
+    """
+    
     l= []
     with open('./all_proverbs.txt') as myfile:
         for row in myfile:
@@ -51,6 +63,12 @@ def gather_proverbs():
     return proverbs
 
 def read(myfile, filename):
+    """
+    Get proverbs from articles from nyt corpus files
+    reads xml data, returns dict with proverbs and metadata
+    case insensitive 
+    """
+    
     tree = et.parse(myfile)
     root = tree.getroot()
     
@@ -92,6 +110,7 @@ if __name__ == '__main__':
     proverbslist = []
     tarfiles = get_filenames(infile)
     file_loc = '/users/p/d/pdodds/data/2010-01nytimes/data/'
+    #read through tar files and output json with proverbs
     for tar_loc in tarfiles:
         tar_open = tarfile.open(tar_loc)
         xmls = subprocess.Popen(['tar', '-tf', tar_loc, '*.xml'], stdout = subprocess.PIPE)

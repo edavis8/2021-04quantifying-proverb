@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 17 11:37:52 2020
 
-@author: admin
+Ethan Davis
+
+Get metadata for articles from the nyt annotated corpus
+
+Takes arguments: 
+    -i --inputfile     job*.txt file with nyt corpus files to submit to server
+
 """
+
 from xml.etree import ElementTree as et
-import re
-import string
 from pathlib import Path
-import os
 import argparse
 import json
 import subprocess
 import tarfile
 
 def make_args():
-    description = 'get proverbs from gutenberg books'
+    """Set up arguments for command line"""
+    
+    description = 'get metadata from nyt corpus'
     parser = argparse.ArgumentParser(description=description)
 
     parser.add_argument('-ifile',
@@ -32,25 +37,21 @@ def valid_path(p):
 
 
 def get_filenames(infile):
+    """Retrive file names from job*.txt list"""
+    
     files = []
     with open(infile, 'r') as myfile:
         for line in myfile:
             files += [line.rstrip()]
     return files
 
-def gather_proverbs():
-    l= []
-    with open('./all_proverbs.txt') as myfile:
-        for row in myfile:
-            l+= [row]    
-    l2 = [a for a in l if a != '\n']
-    l3 = [a.strip('\n') for a in l2]
-    l4 = [a.translate(str.maketrans('', '', string.punctuation)).lower() for a in l3]
-    proverbs = set(l4)
-    proverbs.remove('s')
-    return proverbs
+
 
 def read(myfile, filename):
+    """
+    Get metadata for articles from nyt corpus files
+    reads xml data, returns dict with metadata
+    """
     tree = et.parse(myfile)
     root = tree.getroot()
     
@@ -77,11 +78,11 @@ if __name__ == '__main__':
     args = make_args()
     print('args made')
     infile = args.inputfile
-    outname = str(infile)[16:-4]+'_comp.json'
-    #proverbs = gather_proverbs()
-    proverbslist = []
+    outname = str(infile)[16:-4]+'_complete.json'
     tarfiles = get_filenames(infile)
     file_loc = '/users/p/d/pdodds/data/2010-01nytimes/data/'
+    metadata_list = []
+    #get articles from tar archives and read
     for tar_loc in tarfiles:
         tar_open = tarfile.open(tar_loc)
         xmls = subprocess.Popen(['tar', '-tf', tar_loc, '*.xml'], stdout = subprocess.PIPE)
@@ -91,10 +92,8 @@ if __name__ == '__main__':
             with tar_open.extractfile(xml_file) as myfile:
                 a = read(myfile, xml_file)
                 if a!= None:
-                    proverbslist += [a]   
-    pdata = dict()
-    pdata["data"] = proverbslist
+                    metadata_list += [a]   
     with open('./nyt_meta_outs/'+outname , 'w') as fp:
-        json.dump(pdata, fp)
+        json.dump(metadata_list, fp)
     
 
