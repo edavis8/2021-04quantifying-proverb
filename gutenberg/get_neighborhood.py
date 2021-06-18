@@ -1,6 +1,21 @@
+"""
+
+Ethan Davis
+
+Get proverbs from gutenberg
+Get neighboring 1gram and 2grams
+Investigate language surrounding proverbs
+For later use with Allotaxonometer
+
+Takes arguments: 
+    -i --inputfile     job*.txt file with nyt corpus files to submit to server
+
+"""
+
+
+
 import string
 from pathlib import Path
-import os
 import argparse
 import json
 import re

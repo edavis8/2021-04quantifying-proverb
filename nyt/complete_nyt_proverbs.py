@@ -39,6 +39,7 @@ def valid_path(p):
 
 
 def get_filenames(infile):
+    """get file names from job*.txt file"""
     files = []
     with open(infile, 'r') as myfile:
         for line in myfile:
@@ -51,15 +52,14 @@ def gather_proverbs():
     Return with and without punctuation
     """
     
-    l= []
+    proverbs= []
     with open('./all_proverbs.txt') as myfile:
         for row in myfile:
-            l+= [row]    
-    l2 = [a for a in l if a != '\n']
-    l3 = [a.strip('\n') for a in l2]
-    l4 = [a.translate(str.maketrans('', '', string.punctuation)).lower() for a in l3]
-    proverbs = set(l4)
-    proverbs.remove('s')
+            proverbs+= [row]    
+    proverbs = [a for a in proverbs if a != '\n']
+    proverbs = [a.strip('\n') for a in proverbs]
+    proverbs = [a.translate(str.maketrans('', '', string.punctuation)).lower() for a in proverbs]
+    proverbs = set(proverbs)
     return proverbs
 
 def read(myfile, filename):

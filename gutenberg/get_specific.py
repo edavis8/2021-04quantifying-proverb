@@ -1,6 +1,19 @@
+
+#!/usr/bin/env python3
+"""
+Ethan Davis
+
+Investigate varied phrasing of proverbs in gutenberg
+ex. "every cloud has a/its silver lining" or just "silver lining"
+
+Takes arguments: 
+    -i --inputfile     job*.txt file with nyt corpus files to submit to server
+
+"""
+
+
 import string
 from pathlib import Path
-import os
 import argparse
 import json
 import re
@@ -22,36 +35,32 @@ def valid_path(p):
 
 
 def get_filenames(infile):
+    """get file names from job*.txt file"""
     files = []
     with open(infile, 'r') as myfile:
         for line in myfile:
             files += [line.rstrip()]
     return files
 
-def gather_proverbs():
-    l= []
-    with open('./proverbs/all_proverbs.txt') as myfile:
-        for row in myfile:
-            l+= [row]    
-    l2 = [a for a in l if a != '\n']
-    l3 = [a.strip('\n') for a in l2]
-    l4 = [a.translate(str.maketrans('', '', string.punctuation)).lower() for a in l3]
-    proverbs = set(l4)
-    proverbs.remove('s')
-    return proverbs
+
 
 def read(myfile, filename):
-    d = []
+    """
+    Find instances of varied phrasing and proverbial expressions for several proverbs
+    also returns the context (surrounding words) of use
+    case insensitive and no punctuation
+    """
+    words = []
     for row in myfile:
-        d += [row.rstrip()]
-    a = ' '.join(d)
-    a2 = re.sub('[%s]' % re.escape(string.punctuation+'”“’'), ' ', a).lower()
+        words += [row.rstrip()]
+    words_w_punc = ' '.join(words)
+    words = re.sub('[%s]' % re.escape(string.punctuation+'”“’'), ' ', words_w_punc).lower()
     instances = dict()
 
     instances['file'] = filename
     for x in proverbs:
-        locs = [m.start() for m in re.finditer(x, a2)]
-        instances[x] = [a[max(0,l-1000):min(len(a),l+1000)] for l in locs]
+        locs = [m.start() for m in re.finditer(x, words)]
+        instances[x] = [words[max(0,l-1000):min(len(words),l+1000)] for l in locs]
         
     return instances
 
@@ -61,7 +70,6 @@ if __name__ == '__main__':
     print('args made')
     infile = args.inputfile
     outname = str(infile)[18:-4] + '.json'
-#    proverbs = gather_proverbs()
     proverbs = ["silver lining", "every cloud has a silver lining", "every cloud has its silver lining","glass houses", "those who live in glass houses shouldn t throw stones","glass house",  "fool me once", "do unto others", "do onto others", "tilt at windmills", "tilting windmills", "tilt windmills", "tilting at windmills", "bird in the hand", "bird in hand", "count your chickens", "count ones chickens"]
     proverbslist = []
     folder ='/users/a/r/areagan/scratch/gutenberg/gutenberg-007/'
