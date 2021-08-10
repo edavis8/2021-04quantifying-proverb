@@ -5,5 +5,9 @@ Computational Paremiology: Charting the temporal, ecological dynamics of proverb
 Ethan Davis, Christopher M. Danforth, Wolfgang Mieder, and Peter Sheridan Dodds
 
 
-Proverb frequency data were gathered from the Project Gutenberg corpus, the Google Books N-gram corpus, and the NYT annotated corpus. 
+Proverb frequency data were gathered from the Project Gutenberg corpus, the Google Books N-gram corpus, and the NYT annotated corpus. Twitter data were gathered from Storywrangler (https://storywrangling.org)
+
+
+The paper is now on the arXiv: https://arxiv.org/abs/2107.04929
+
 
