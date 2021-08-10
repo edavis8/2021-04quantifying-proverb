@@ -1,16 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 29 13:48:03 2021
 
-@author: admin
-"""
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Feb 15 12:50:22 2021
 
-@author: admin
+@author: Ethan Davis
 """
 
 """Generate figures for the arXIV version"""
@@ -22,7 +16,7 @@ import pandas as pd
 from datetime import date
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-
+import json
 
 
 """Twitter timeseries figures"""
@@ -52,6 +46,8 @@ def individual_plot_twitter(proverb, data, res=None, date_range = None, rt = Fal
     fig, ax = plt.subplots(figsize=(12, 5.75))
 
     ax.text(0.04,0.95,"\"{}\"".format(proverb),horizontalalignment='left', transform=ax.transAxes)
+
+    #get data for one proverb
     ts = data[data.proverb ==proverb]
 
     ts.date = pd.to_datetime(ts.date, format = '%Y-%m-%d', errors='coerce')
@@ -60,22 +56,26 @@ def individual_plot_twitter(proverb, data, res=None, date_range = None, rt = Fal
     print(ts)
     
     ts2 = ts.copy()[['freq_noRT', 'freq']]
-
+    
+    #30 day rolling average
     ts2 = ts2.rolling(30).mean()
     
+    #including or excluding retweets
     if rt == False:
         ax.plot(ts.index, ts['freq_noRT'], alpha = 0.5, marker = 'o', fillstyle = 'none', color='gray')
         ax.plot(ts2.index, ts2['freq_noRT'], alpha = 0.9, color='darkorange', linewidth = 2)
     elif rt == True:
         ax.plot(ts.index, ts['freq'], alpha = 0.5, marker = 'o', fillstyle = 'none', color='gray')
         ax.plot(ts2.index, ts2['freq'], alpha = 0.9, color='darkorange', linewidth = 2)
+    
     ax.set_xlabel('Year')
     ax.set_yscale('log')
-
     ax.set_ylabel('Frequency among all {}-grams on Twitter'.format(len(proverb.split())))
+
     plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.1)
 
 
+#plot example proverbs
 individual_plot_twitter('never say never', three_twitter)
 plt.savefig('arxiv_figures/never-twitter-{}.pdf'.format(today))
 
@@ -173,6 +173,12 @@ top_two_google =  sorted([(two_google[two_google.proverb ==x].match.sum(), x) fo
 
 
 def grid_plot_google(proverbs_list, data, dim = (4,4), ylog = False):    
+    """
+    Plot grid of Google timeseries (frequency)
+    Takes list of proverbs, timeseries data (df), and grid dimension as arguments
+    Plots yearly frequency and rolling 5-year average
+    """   
+
     plt.rcParams.update({
         'font.size': 9,
         'axes.titlesize': 8,
@@ -187,10 +193,6 @@ def grid_plot_google(proverbs_list, data, dim = (4,4), ylog = False):
     gs = gridspec.GridSpec(ncols=cols, nrows=rows)
     gs.update(wspace = 0.2, hspace = 0.2)
     
-    #proverbs_list = [a[1] for a in top_two_google[0:rows*cols]]
-    
-
-    window_size = 7
     
     res = None
      
@@ -200,24 +202,21 @@ def grid_plot_google(proverbs_list, data, dim = (4,4), ylog = False):
     fig.text(0.02, 0.5, 'Frequency among all volumes in Google Books', va='center', rotation='vertical', fontsize=14)
     for r in np.arange(0, rows, step=1):
         for c in np.arange(cols):
-    #        if i == 4:
-    #            break
+
             ax = fig.add_subplot(gs[r, c])
-        #    tax = ax.twinx()
-    
-     #       ax.set_title(proverbs_list[i], fontsize=14)
             ax.text(0.1,0.9,'\"{}\"'.format(proverbs_list[i].lower()),horizontalalignment='left', transform=ax.transAxes)
+
             ts = data[data.proverb ==proverbs_list[i]]
             ts = ts[data.year >= 1800]
             ts.year = pd.to_datetime(ts.year, format = '%Y', errors='coerce')
             ts.index = ts.year
             ts = ts.sort_index()
             ts = ts.reindex(pd.date_range('01/01/1800', '01/01/2019', freq = 'AS'), fill_value=0)
-            
+            #get 5-year rolling average
             ts2 = ts.copy()
             ts2 = ts2.rolling(window = 5).mean()
             print(ts)
-#            ts = ts.truncate(start_date, end_date)
+
             if res != None:
                 ts = ts.resample(res).sum()
     
@@ -226,7 +225,7 @@ def grid_plot_google(proverbs_list, data, dim = (4,4), ylog = False):
 
             elif ylog == True:
                 ax.set_yscale('log')    
-        #        tax.set_yscale('log')
+                
             ax.plot(ts.index, ts['vol_norm'], alpha = 0.5, color = 'gray')
             ax.plot(ts2.index, ts2['vol_norm'], alpha = 0.9, color='darkorange')
             i+=1
@@ -252,7 +251,13 @@ plt.savefig('arxiv_figures/google-3gram-grid2-{}.pdf'.format(today))
 
 gutenberg = pd.read_csv('proverb_timeseries.csv', index_col = 'year')
 counts = pd.read_csv('proverb_counts.csv')
+
 def grid_plot_gutenberg(proverbs_list, data, counts, begin_at =1800, end_at = 1950, bin_size = 20):
+    """
+    Plot grid of Gutenberg timeseries (frequency)
+    Takes list of proverbs, timeseries data (df), start/end year, bin size, and grid dimension as arguments
+    Default plot is in 20-year bins
+    """   
     
     plt.rcParams.update({
         'font.size': 9,
@@ -268,9 +273,6 @@ def grid_plot_gutenberg(proverbs_list, data, counts, begin_at =1800, end_at = 19
     gs = gridspec.GridSpec(ncols=cols, nrows=rows)
     gs.update(wspace = 0.2, hspace = 0.2)  
     
-    window_size = 7
-    
-    res = None
     
     i = 0
     
@@ -282,27 +284,26 @@ def grid_plot_gutenberg(proverbs_list, data, counts, begin_at =1800, end_at = 19
     ts_norm = ts_bin.div(ts_bin['num_books'], axis=0)
     ts_norm = ts_norm.fillna(0)
     ts = ts_norm.truncate(before = begin_at, after = end_at)[proverbs_list]
-#    ts.index = pd.to_datetime(data.index, format = '%Y', errors='coerce')
+
+    #loop to create each timeseries plot in the grid
     for r in np.arange(0, rows, step=1):
         for c in np.arange(cols):
 
-            
             ts2 = ts[proverbs_list[i]].to_frame()
 
             ax = fig.add_subplot(gs[r, c])
 
             ax.text(0.1,0.9,'\"{}\"'.format(proverbs_list[i]),horizontalalignment='left', transform=ax.transAxes)
 
-            
             ax.plot(ts2.index, ts2[proverbs_list[i]], alpha = 0.5)
             i+=1
             
     plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.1)
 
-            
+
+#plot top 16, and 17-32 (#1 "hold your tongue" excluded)            
 grid_plot_gutenberg(list(counts[1:17]['proverbs']), gutenberg, counts, bin_size =5)            
 plt.savefig('arxiv_figures/gutenberg-grid-{}.pdf'.format(today))
- 
            
 grid_plot_gutenberg(list(counts[17:33]['proverbs']), gutenberg, counts, bin_size =5)            
 plt.savefig('arxiv_figures/gutenberg-grid2-{}.pdf'.format(today))
@@ -310,24 +311,28 @@ plt.savefig('arxiv_figures/gutenberg-grid2-{}.pdf'.format(today))
 
 
 """NYT GRID PLOT"""
-import json
+#data for proverbs in NYT
 ts = pd.read_csv('nyt_ts_new.csv', index_col = 0)
 ts = ts.set_index(pd.to_datetime(ts.index))
-#ts['total'] = list(ts2.total)
-#all_ts['day'] = [1 if a else 0 for a in all_ts['total']]
 nyt_totals = [(ts.iloc[:,i].name, ts.iloc[:,i].sum()) for i in range(len(ts.columns)) if ts.columns[i] != 'total']
 nyt_totals.sort(key = lambda x :x[1], reverse=True)
 proverbs_list = [a[0] for a in nyt_totals]
 
+
+#data for number of articles each day
 with open('nyt_date_totals.json', 'r') as fp:
-    f = json.load(fp)
- 
+    f = json.load(fp)    
 date_totals = pd.Series(f)
-
 date_totals.index = pd.to_datetime(date_totals.index)
-
 ts['total'] = date_totals
+
+
 def grid_plot_nyt(proverbs_list, data, dim = (4,4), res = '1M'):
+    """
+    Plot grid of NYT timeseries (frequency over articles)
+    Takes list of proverbs, timeseries data (df), and grid dimension as arguments
+    Plots monthly and yearly average
+    """
     
     plt.rcParams.update({
         'font.size': 9,
@@ -343,22 +348,25 @@ def grid_plot_nyt(proverbs_list, data, dim = (4,4), res = '1M'):
     gs = gridspec.GridSpec(ncols=cols, nrows=rows)
     gs.update(wspace = 0.3, hspace = 0.2)
     
-    window_size = 7
-    
-    
+
     i = 0
     
     fig.text(0.5, 0.02,'Year' , ha='center', fontsize=14)
     fig.text(0.02, 0.5, 'Frequency among all articles in NYT', va='center', rotation='vertical', fontsize=14)
     
+    #get month resolution
     ts = data.copy()
     resamp = ts.resample(res).sum()
     resamp = resamp.div(resamp['total'], axis =0)
     ts = resamp
+    
+    #get year resolution
     ts2 = data.copy()
     resamp = ts.resample('1Y').sum()
     resamp = resamp.div(resamp['total'], axis =0)
     ts2 = resamp
+    
+    #make each plot in the grid
     for r in np.arange(0, rows, step=1):
         for c in np.arange(cols):
 
@@ -373,7 +381,8 @@ def grid_plot_nyt(proverbs_list, data, dim = (4,4), res = '1M'):
             
     plt.subplots_adjust(left=0.08, right=0.95, top=0.95, bottom=0.1)
 
-    
+
+#plot top 16, and 17-32
 grid_plot_nyt(proverbs_list[0:16], ts)
 plt.savefig('arxiv_figures/nyt-grid-{}.pdf'.format(today))
    
@@ -382,14 +391,10 @@ grid_plot_nyt(proverbs_list[16:32], ts)
 plt.savefig('arxiv_figures/nyt-grid2-{}.pdf'.format(today))
  
 
-
-
-   
-
+"""Zipf Plots"""
 
 from collections import Counter
 from adjustText import adjust_text
-#import powerlaw as pl
 
 
 """Gutenberg Zip"""
@@ -397,7 +402,8 @@ counts = pd.read_csv('proverb_counts.csv')
 gut_counts= counts[['counts', 'proverbs']]
 gut_counts = list(zip(list(gut_counts.proverbs), list(gut_counts.counts)))
 
-def Zipf(data, data_type='obs', fit =False):
+def Zipf_Gutenberg(data, data_type='obs', fit =False):
+    """Zipf (rank/frequency) plot for proverbs in Gutenberg"""
     
     plt.rcParams.update({
         'font.size': 9,
@@ -408,16 +414,15 @@ def Zipf(data, data_type='obs', fit =False):
         'legend.fontsize': 10,
     })
     
-#    rows, cols = 4, 4
-    fig = plt.figure()
+
     if data_type == 'obs':
         counts=Counter(data)
         freq = sorted(list(counts.items()), reverse = True, key = lambda x:x[1])
         print(freq[:5])       
     elif data_type == 'freq':
         freq = data
-#    logx = np.array([math.log(x) for x in range(1, len(freq)+1)]).reshape(-1,1)
-#    logy = np.array([math.log(y[1]) for y in freq]).reshape(-1,1)
+    
+    
     x = np.array([x for x in range(1,len(freq)+1)]).reshape(-1,1)
     y = np.array([y[1] for y in freq]).reshape(-1,1)
     plt.xlabel('Rank')
@@ -427,13 +432,9 @@ def Zipf(data, data_type='obs', fit =False):
     plt.plot(x, y, marker = 'o', fillstyle = 'none', linestyle = 'none', mec='lightblue')
     texts = [plt.text(x[i], y[i], freq[i][0], fontsize=9) for i in range(5)]
     adjust_text(texts, arrowprops=dict(arrowstyle='-'))
-#    for x_1 in range(10):
-#        plt.annotate(freq[x_1][0], (x_1+1,y[x_1])) 
-#    if fit == True:
-#        fit = LR().fit(logx, logy)
-#        print(fit)
+
     
-Zipf(gut_counts, data_type='freq')
+Zipf_Gutenberg(gut_counts, data_type='freq')
 
 
      
@@ -446,12 +447,12 @@ for proverb in set(three_google['proverb']):
 
 counts.sort(reverse = True, key = lambda x: x[1])
 
-
 top_three_google =  sorted([(three_google[three_google.proverb ==x].match.sum(), x.lower()) for x in set(three_google.proverb)], reverse = True)[1:]
 top_two_google =  sorted([(two_google[two_google.proverb ==x].vol_norm.sum(), x.lower()) for x in set(two_google.proverb)], reverse = True)
 
-def Zipf(data, data_type='obs', fit =False):
-        
+def Zipf_Google(data, data_type='obs', fit =False):
+    """Zipf (rank/frequency) plot for proverbs in Google books"""
+    
     plt.rcParams.update({
         'font.size': 9,
         'axes.titlesize': 8,
@@ -461,18 +462,16 @@ def Zipf(data, data_type='obs', fit =False):
         'legend.fontsize': 10,
     })
     
-#    rows, cols = 4, 4
-    fig = plt.figure()
+
     if data_type == 'obs':
         counts=Counter(data)
         freq = sorted(list(counts.items()), reverse = True, key = lambda x:x[1])
         print(freq[:5])       
     elif data_type == 'freq':
         freq = data
-#    logx = np.array([math.log(x) for x in range(1, len(freq)+1)]).reshape(-1,1)
-#    logy = np.array([math.log(y[1]) for y in freq]).reshape(-1,1)
-    x = np.array([x for x in range(1, len(freq)+1)])#.reshape(-1,1)
-    y = np.array([y[0] for y in freq])#.reshape(-1,1)
+
+    x = np.array([x for x in range(1, len(freq)+1)])
+    y = np.array([y[0] for y in freq])
     plt.xlabel('Rank')
     plt.ylabel('Frequency')
     plt.yscale('log')
@@ -480,20 +479,17 @@ def Zipf(data, data_type='obs', fit =False):
     plt.plot(x, y, marker = 'o', fillstyle = 'none', linestyle = 'none', mec='lightblue')
     texts = [plt.text(x[i], y[i], freq[i][1], fontsize=9) for i in range(5)]
     adjust_text(texts, arrowprops=dict(arrowstyle='-'))
-#    for x_1 in range(10):
-#        plt.annotate(freq[x_1][0], (x_1+1,y[x_1])) 
-#    if fit == True:
-#        fit = LR().fit(logx, logy)
-#        print(fit)
+
     
-Zipf(top_three_google, data_type='freq')
-Zipf(top_two_google, data_type='freq')
+Zipf_Google(top_three_google, data_type='freq')
+Zipf_Google(top_two_google, data_type='freq')
 
 
 """Twitter Zipf"""
 
-#top_three
+
 def Zipf(data, data_type='obs', fit =False):
+    """Zipf (rank/frequency) plot for proverbs on Twitter"""
     
     plt.rcParams.update({
         'font.size': 9,
@@ -504,16 +500,14 @@ def Zipf(data, data_type='obs', fit =False):
         'legend.fontsize': 10,
     })
     
-#    rows, cols = 4, 4
-    fig = plt.figure()
+
     if data_type == 'obs':
         counts=Counter(data)
         freq = sorted(list(counts.items()), reverse = True, key = lambda x:x[1])
         print(freq[:5])       
     elif data_type == 'freq':
         freq = data
-#    logx = np.array([math.log(x) for x in range(1, len(freq)+1)]).reshape(-1,1)
-#    logy = np.array([math.log(y[1]) for y in freq]).reshape(-1,1)
+
     x = np.array([x for x in range(1, len(freq)+1)]).reshape(-1,1)
     y = np.array([y[0] for y in freq]).reshape(-1,1)
     plt.xlabel('Rank')
@@ -523,11 +517,7 @@ def Zipf(data, data_type='obs', fit =False):
     plt.plot(x, y, marker = 'o', fillstyle = 'none', linestyle = 'none', mec='lightblue')
     texts = [plt.text(x[i], y[i], freq[i][1], fontsize=9) for i in range(5)]
     adjust_text(texts, arrowprops=dict(arrowstyle='-'))
-#    for x_1 in range(10):
-#        plt.annotate(freq[x_1][0], (x_1+1,y[x_1])) 
-#    if fit == True:
-#        fit = LR().fit(logx, logy)
-#        print(fit)
+
     
 Zipf(top_three_twitter, data_type='freq')
    
@@ -537,11 +527,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 ts = pd.read_csv('nyt_ts.csv', index_col = 0)
 ts = ts.set_index(pd.to_datetime(ts.index))
-#all_ts['day'] = [1 if a else 0 for a in all_ts['total']]
+
 totals = [(ts.iloc[:,i].name, ts.iloc[:,i].sum()) for i in range(len(ts.columns)) if i != 'total']
 totals.sort(key = lambda x :x[1], reverse=True)
 
 def Zipf(data, data_type='obs', fit =False):
+    """Zipf (rank/frequency) plot for proverbs in Gutenberg"""
+     
     plt.rcParams.update({
         'font.size': 9,
         'axes.titlesize': 8,
@@ -550,15 +542,15 @@ def Zipf(data, data_type='obs', fit =False):
         'ytick.labelsize': 8,
         'legend.fontsize': 10,
     })
-    fig = plt.figure()
+
+
     if data_type == 'obs':
         counts=Counter(data)
         freq = sorted(list(counts.items()), reverse = True, key = lambda x:x[1])
         print(freq[:5])       
     elif data_type == 'freq':
         freq = data
-#    logx = np.array([math.log(x) for x in range(1, len(freq)+1)]).reshape(-1,1)
-#    logy = np.array([math.log(y[1]) for y in freq]).reshape(-1,1)
+
     x = np.array([x for x in range(1,len(freq)+1)]).reshape(-1,1)
     y = np.array([y[1] for y in freq]).reshape(-1,1)
     plt.xlabel('Rank')
@@ -569,16 +561,14 @@ def Zipf(data, data_type='obs', fit =False):
     print(x[0], y[0], freq[0][0])
     texts = [plt.text(x[i], y[i], freq[i][0], fontsize=9) for i in range(5)]
     adjust_text(texts, arrowprops=dict(arrowstyle='-'))
-#    for x_1 in range(10):
-#        plt.annotate(freq[x_1][0], (x_1+1,y[x_1])) 
-#    if fit == True:
-#        fit = LR().fit(logx, logy)
-#        print(fit)
-    
+
+
 Zipf(totals, data_type='freq')
         
 
 
+
+"""Create frequency tables for each corpus"""
 
 google_50 = pd.DataFrame({'Proverb': [a[1].lower() for a in top_three_google][:50], 'Count': [format(a[0], ',') for a in top_three_google][:50]})
 google_50.index = google_50.index+1
@@ -609,7 +599,7 @@ nyt_50.to_latex('thesis_figures/nyt_50_table.tex')
 
 
 
-"""GUTENBERG CENTRALITY TABLES"""
+"""Table for betweenness centrality in book-proverb network"""
 
 with open('book_btwn_rank.json', 'r') as file:
     btwn = json.load(file)
