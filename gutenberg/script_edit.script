@@ -1,7 +1,0 @@
-#!/usr/bin/bash
-for F in $(cd /users/e/d/edavis4/proverbs/jobtexts  && ls)
-do
- filename=$F
- sed -i "9s@.*@~/anaconda3/bin/python proverbs/get_proverbs.py -ifile proverbs/jobtexts/${filename}@g" proverbs_script.script
- qsub proverbs_script.script
-done

@@ -1,8 +1,21 @@
+"""
+
+Ethan Davis
+
+Get proverbs from Gutenberg documents
+
+Takes arguments: 
+    -i --inputfile     job*.txt file with nyt corpus files to submit to server
+
+"""
+
+
 import string
 from pathlib import Path
-import os
 import argparse
 import json
+
+
 
 def make_args():
     description = 'get proverbs from gutenberg books'
@@ -28,30 +41,31 @@ def get_filenames(infile):
     return files
 
 def gather_proverbs():
-    l= []
+    proverbs = []
     with open('./proverbs/all_proverbs.txt') as myfile:
         for row in myfile:
-            l+= [row]    
-    l2 = [a for a in l if a != '\n']
-    l3 = [a.strip('\n') for a in l2]
-    l4 = [a.translate(str.maketrans('', '', string.punctuation)).lower() for a in l3]
-    proverbs = set(l4)
-    proverbs.remove('s')
+            proverbs+= [row]    
+    proverbs = [a for a in proverbs if a != '\n']
+    proverbs = [a.strip('\n') for a in proverbs]
+    proverbs = [a.translate(str.maketrans('', '', string.punctuation)).lower() for a in proverbs]
+    proverbs = set(proverbs)
     return proverbs
 
 def read(myfile, filename):
-    d = []
+    doc = []
     for row in myfile:
-        d += [row.rstrip()]
-    a = ' '.join(d)
-    a2 = a.translate(str.maketrans('', '', string.punctuation+'”“’')).lower()
+        doc += [row.rstrip()]
+    text = ' '.join(doc)
+    
+    #remove punctuation from file
+    text = text.translate(str.maketrans('', '', string.punctuation+'”“’')).lower()
     
     instances = dict()
 
     instances['file'] = filename
-    for x in proverbs:
-        if x in a2:
-            instances[x] = a2.count(x)
+    for proverb in proverbs:
+        if proverb in text:
+            instances[proverb] = text.count(proverb)
 
     return instances
 
