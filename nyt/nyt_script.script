@@ -1,9 +1,0 @@
-#PBS -l nodes=1:ppn=1
-#PBS -l walltime=10:00:00
-#PBS -N proverbs
-#PBS -j oe
-#PBS -m bea
-
-cd $HOME/proverbs/nyt_sample
-echo "running on " `hostname`
-~/anaconda3/bin/python nyt_tgz_proverbs.py -ifile nyt_jobs/nyt_job9.txt
